@@ -1,6 +1,13 @@
 {
   "extends": "expo/tsconfig.base",
   "compilerOptions": {
-    "strict": true
+    "strict": true,
+    "jsx": "react-jsx", // ou "react" pour les versions plus anciennes de React
+    "allowJs": true, // Si vous avez des fichiers .js dans votre projet
+    "moduleResolution": "node",
+    "esModuleInterop": true,
+    "target": "es6", // ou supérieur, comme "esnext"
+    "module": "esnext", // ou "commonjs" si nécessaire
+    "skipLibCheck": true
   }
 }
