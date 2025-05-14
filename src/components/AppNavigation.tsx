@@ -27,7 +27,7 @@ import { getUserDatas, storeNumCompte, storeUserDatas } from '../services/AsyncS
 
 
 const Stack = createNativeStackNavigator();
-const db = SQLite.openDatabaseAsync('local.db');
+const db = SQLite.openDatabaseAsync('local_easy_send.db');
 const Drawer = createDrawerNavigator()
 
 
@@ -82,8 +82,8 @@ const AppNavigation = () => {
               }
             // await (await db).runAsync("UPDATE user SET nom_complet='Jordy Brian', numero='0797799890'")
             // await (await db).runAsync('DELETE FROM user')
-            // const get_user:any = await (await db).getFirstAsync('SELECT * FROM user');
-            // console.log('userdata ',get_user)
+            const get_user:any = await (await db).getFirstAsync('SELECT * FROM user');
+            console.log('userdata ',get_user)
         } catch (error) {
             Alert.alert("Erreur de la création de la Base de données")
             console.log('Database not created : ', error);

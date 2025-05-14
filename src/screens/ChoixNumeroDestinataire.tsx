@@ -204,6 +204,36 @@ const ChoixNumeroDestinataire = ({navigation}:any) => {
             return
           }
         if(currentNumero){
+
+          switch (reseau)
+          {
+            case "ORANGE":
+              const regex = /^(07)[0-9]{8}$/
+              if(!regex.test(currentNumero))
+              {
+                alert("Le numéro n'est pas un numéro orange")
+                return
+              }
+              break
+              case "MOOV":
+                const regex1 = /^(01)[0-9]{8}$/
+                if(!regex1.test(currentNumero))
+                {
+                  alert("Le numéro n'est pas un numéro moov")
+                  return
+                }
+                break
+              case "MTN":
+                const regex2 = /^(05)[0-9]{8}$/
+                if(!regex2.test(currentNumero))
+                {
+                  alert("Le numéro n'est pas un numéro MTN")
+                  return
+                }
+                break
+          }
+
+
           navigation.navigate('Transaction')
         }else{
           alert('Veillez entrer un numéro')
@@ -218,6 +248,35 @@ const ChoixNumeroDestinataire = ({navigation}:any) => {
         }
         
         const res = await getUserDatas()
+
+        switch (reseau)
+        {
+          case "ORANGE":
+            const regex = /^(07)[0-9]{8}$/
+            if(!regex.test(res.numero))
+            {
+              alert("Le numéro n'est pas un numéro orange")
+              return
+            }
+            break
+            case "MOOV":
+              const regex1 = /^(01)[0-9]{8}$/
+              if(!regex1.test(res.numero))
+              {
+                alert("Le numéro n'est pas un numéro moov")
+                return
+              }
+              break
+            case "MTN":
+              const regex2 = /^(05)[0-9]{8}$/
+              if(!regex2.test(res.numero))
+              {
+                alert("Le numéro n'est pas un numéro MTN")
+                return
+              }
+              break
+        }
+
         const data = [
             {
                 destinataire: {name: res.nomcomplet, "phoneNumbers": [{number: res.numero}]},

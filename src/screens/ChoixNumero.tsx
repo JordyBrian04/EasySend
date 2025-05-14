@@ -109,6 +109,7 @@ const ChoixNumero = ({navigation}:any) => {
       }
 
       const valideContact = async (num:any) => {
+
         // console.log('currentNumero', currentNumero)
         const data = [
           {expediteur: num, action: datas?.action, reseau: reseau}
@@ -203,6 +204,34 @@ const ChoixNumero = ({navigation}:any) => {
 
       const handleNext = () => {
         if(currentNumero){
+          switch (reseau)
+          {
+            case "ORANGE":
+              const regex = /^(07)[0-9]{8}$/
+              if(!regex.test(currentNumero))
+              {
+                alert("Le numéro n'est pas un numéro orange")
+                return
+              }
+              break
+              case "MOOV":
+                const regex1 = /^(01)[0-9]{8}$/
+                if(!regex1.test(currentNumero))
+                {
+                  alert("Le numéro n'est pas un numéro moov")
+                  return
+                }
+                break
+              case "MTN":
+                const regex2 = /^(05)[0-9]{8}$/
+                if(!regex2.test(currentNumero))
+                {
+                  alert("Le numéro n'est pas un numéro MTN")
+                  return
+                }
+                break
+          }
+
           navigation.navigate('ChoixNumeroDestinataire')
         }else{
           alert('Veuillez entrer un numéro svp')
@@ -215,7 +244,37 @@ const ChoixNumero = ({navigation}:any) => {
           alert('Veuillez sélectionner un réseau svp')
           return
         }
+
         const res = await getUserDatas()
+        
+        switch (reseau)
+        {
+          case "ORANGE":
+            const regex = /^(07)[0-9]{8}$/
+            if(!regex.test(res.numero))
+            {
+              alert("Le numéro n'est pas un numéro orange")
+              return
+            }
+            break
+            case "MOOV":
+              const regex1 = /^(01)[0-9]{8}$/
+              if(!regex1.test(res.numero))
+              {
+                alert("Le numéro n'est pas un numéro moov")
+                return
+              }
+              break
+            case "MTN":
+              const regex2 = /^(05)[0-9]{8}$/
+              if(!regex2.test(res.numero))
+              {
+                alert("Le numéro n'est pas un numéro MTN")
+                return
+              }
+              break
+        }
+
         const data = [
             {
                 expediteur: {name: res.nomcomplet, "phoneNumbers": [{number: res.numero}]},

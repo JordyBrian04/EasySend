@@ -20,6 +20,7 @@ const Inscription = ({navigation}:any) => {
         password: '',
         confirmPassword: '',
         date_naissance: '',
+        code_promo: '',
     })
 
     const toggleDatePicker = () => {
@@ -206,6 +207,22 @@ const Inscription = ({navigation}:any) => {
                               </TouchableOpacity>
                             )}
 
+                        </View>
+
+                        {/* Code promo */}
+                        <View style={[styles.inputGroup, { marginBottom: 16 }]}>
+                            <Text style={[styles.lib, { fontSize: 14, color: '#4b5563', marginBottom: 8 }]}>Code parrainage</Text>
+                            <TextInput
+                                placeholder='Code parrainage'
+                                autoCapitalize='characters'
+                                autoCorrect={false}
+                                keyboardType='default'
+                                maxLength={12}
+                                returnKeyType='next'
+                                value={userData.code_promo}
+                                onChangeText={(e) => SetUserData({...userData, code_promo:e})}
+                                style={styles.input}
+                            />
                         </View>
 
                         {/* Mot de passe */}

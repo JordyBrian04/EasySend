@@ -40,11 +40,19 @@ const Confirmation = ({navigation}:any) => {
         return () => clearInterval(interval);
     }, [minutes, stopTimer]);
 
+    React.useEffect(() => {
+        console.log(code.length)
+        if(code.length == 5)
+        {
+            handleConfirm()
+        }
+    }, [code])
+
     const handleConfirm = async () => {
         setLoading(true)
         const res:any = await verifyCode({code: code})
         console.log('res', res)
-        if(res.length > 0)
+        if(res && res.length > 0)
             {
                 if(res[0].date_expiration < new Date())
                 {

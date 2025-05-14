@@ -79,11 +79,19 @@ export const createUser = async (req: any) => {
             return "Nom d'utilisateur ou numéro déjà utilisé"
         }
 
+        const randomNum = Math.floor(100 + Math.random() * 900); // 3 chiffres
+        const randomStr = Math.random().toString(36).substring(2, 6).toUpperCase(); // 4 lettres aléatoires
+        const cleanUsername = req.nomcomplet.replace(/\s+/g, '').toUpperCase().slice(0, 5); // Prénom nettoyé (max 5 caractères)
+      
+        const user_code = `${cleanUsername}${randomNum}-${randomStr}`;
+
         const newUser:any = await db.insert(utilisateur).values({
             numero: req.phoneNumber,
             nomcomplet: req.nomcomplet,
             mdp: req.password,
-            date_naissance: req.date_naissance
+            date_naissance: req.date_naissance,
+            user_code_promo: user_code,
+            signup_code_promo: req.code_promo
         }).returning({id: utilisateur.id})
 
         console.log(newUser[0].id)
