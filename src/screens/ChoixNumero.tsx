@@ -1,6 +1,6 @@
 import * as React from 'react';
-import { Text, View, StyleSheet, SafeAreaView, TouchableOpacity, TextInput, Dimensions, FlatList, RefreshControl, Modal, TouchableWithoutFeedback, Image, StatusBar } from 'react-native';
-import { getData, getUserDatas, storeData } from '../services/AsyncStorage';
+import { Text, View, StyleSheet, SafeAreaView, TouchableOpacity, TextInput, Dimensions, FlatList, RefreshControl, Modal, TouchableWithoutFeedback, Image, StatusBar, ScrollView, KeyboardAvoidingView } from 'react-native';
+import { getConstante, getData, getUserDatas, saveContante, storeData } from '../services/AsyncStorage';
 import { useFocusEffect } from '@react-navigation/native';
 import { useCallback, useState } from 'react';
 import {AntDesign, FontAwesome, MaterialCommunityIcons, MaterialIcons } from '@expo/vector-icons';
@@ -24,13 +24,15 @@ const ChoixNumero = ({navigation}:any) => {
     const [reseau, setReseau] = useState('')
 
     const getDatas = async () => {
-        const res:any = await getData();
+        // const res:any = await getData();
+        const res:any = await getConstante('data')
         console.log(res)
         setDatas(res)    
     }
 
     const getUser = async () => {
-        const res:any = await getUserDatas();
+        // const res:any = await getUserDatas();
+        const res:any = await getConstante('user');
         setUser(res)
     }
 
@@ -119,7 +121,8 @@ const ChoixNumero = ({navigation}:any) => {
         setModalVisible(false)
         setOpen(false)
         ref.current?.scrollTo(0)
-        await storeData(data)
+        // await storeData(data)
+        await saveContante("data", JSON.stringify(data))
         navigation.navigate("ChoixNumeroDestinataire")
       }
 
@@ -245,13 +248,13 @@ const ChoixNumero = ({navigation}:any) => {
           return
         }
 
-        const res = await getUserDatas()
+        // const res = await getUserDatas()
         
         switch (reseau)
         {
           case "ORANGE":
             const regex = /^(07)[0-9]{8}$/
-            if(!regex.test(res.numero))
+            if(!regex.test(user.numero))
             {
               alert("Le numéro n'est pas un numéro orange")
               return
@@ -259,7 +262,7 @@ const ChoixNumero = ({navigation}:any) => {
             break
             case "MOOV":
               const regex1 = /^(01)[0-9]{8}$/
-              if(!regex1.test(res.numero))
+              if(!regex1.test(user.numero))
               {
                 alert("Le numéro n'est pas un numéro moov")
                 return
@@ -267,7 +270,7 @@ const ChoixNumero = ({navigation}:any) => {
               break
             case "MTN":
               const regex2 = /^(05)[0-9]{8}$/
-              if(!regex2.test(res.numero))
+              if(!regex2.test(user.numero))
               {
                 alert("Le numéro n'est pas un numéro MTN")
                 return
@@ -277,12 +280,13 @@ const ChoixNumero = ({navigation}:any) => {
 
         const data = [
             {
-                expediteur: {name: res.nomcomplet, "phoneNumbers": [{number: res.numero}]},
+                expediteur: {name: user.nomcomplet, "phoneNumbers": [{number: user.numero}]},
                 action: datas.action,
                 reseau: reseau
             }
         ]
-        await storeData(data)
+        // await storeData(data)
+        await saveContante("data", JSON.stringify(data))
         // console.log(data)
         navigation.navigate("ChoixNumeroDestinataire")
     }
@@ -290,10 +294,12 @@ const ChoixNumero = ({navigation}:any) => {
     return (
         <SafeAreaView style={styles.container}>
           <StatusBar barStyle='dark-content' />
-            <View style={{paddingLeft: 12, paddingRight: 12}}>
+          <ScrollView contentContainerStyle={{flexGrow: 1}} showsHorizontalScrollIndicator={false}>
+
+            <KeyboardAvoidingView style={{paddingLeft: 12, paddingRight: 12}}>
 
                 <View style={styles.header}>
-                    <TouchableOpacity onPress={() => navigation.navigate('Home')}>
+                    <TouchableOpacity onPress={() => navigation.navigate('Tabs')}>
                         <AntDesign name="arrowleft" size={32} color="black" />
                     </TouchableOpacity>
                     <View style={{flex: 1, alignItems: 'center', justifyContent: 'center', width: '90%'}}>
@@ -369,61 +375,15 @@ const ChoixNumero = ({navigation}:any) => {
                     </TouchableOpacity> */}
                 </View>
 
-            </View>
-            <View style={{height: SCREEN_HEIGHT, width: SCREEN_WIDTH, display: open ? 'flex' : 'none', position: 'absolute', backgroundColor:"#0000002a"}}></View>
-            <BottomSheet ref={ref}>
-                <View style={{padding: 12}}>
+            </KeyboardAvoidingView>
 
-                <TextInput
-                    style={{borderWidth: 1, borderColor: '#01AEB6', height: 48, fontSize: 14, lineHeight: 20, color: '#1f2937', borderRadius: 13, padding: 10}}
-                    placeholder='Entrez le numéro'
-                    autoCapitalize='sentences'
-                    autoCorrect={false}
-                    keyboardType='default'
-                    maxLength={10}
-                    onChangeText={(e) => rechercherContact(e)}
-                />
-
-                <Text style={{fontSize: 16, lineHeight: 24, marginBottom: 12, marginTop: 12}}>Selectionnez un contact ({contacts.length})</Text>
-                    <FlatList
-                        data={contacts}
-                        keyExtractor={(item) => item.id}
-                        style={{paddingBottom:20, marginBottom:20, marginTop:6}}
-                        renderItem={({ item }) => (
-                        <TouchableOpacity
-                        style={{flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingLeft: 16, paddingRight: 16, paddingTop: 12, paddingBottom: 12, borderBottomWidth: 1, borderColor: '#4b5563'}}
-                            onPress={() => handleContact(item.id)}
-                        >
-                            <View style={{width: 32, height: 32, backgroundColor: '#3b82f6', alignItems: 'center', justifyContent: 'center', borderRadius: 100}}>
-                            <AntDesign name="user" size={24} color="white" />
-                            </View>
-                            <View style={{width: '75%'}}>
-                            <Text style={{fontSize: 14, lineHeight: 20, fontWeight: 'bold'}}>
-                                {item.name}
-                            </Text>
-                            <Text style={{fontSize: 14, lineHeight: 20, fontWeight: 'bold'}}>
-                                {item.phoneNumbers && item.phoneNumbers[0] && item.phoneNumbers[0].number}
-                            </Text>
-                            </View>
-                            <MaterialIcons name="navigate-next" size={30} color="black" />
-                        </TouchableOpacity>
-                        )}
-                        refreshControl={
-                            <RefreshControl
-                                refreshing={refreshing}
-                                onRefresh={refreshContact}
-                            />
-                        }
-                    />
-                </View>
-            </BottomSheet>
-
-            <View style={{position: 'absolute', bottom: 0, left: 0, right: 0, paddingBottom: 40, paddingHorizontal: 12, alignItems: 'center', justifyContent: 'center'}}>
+            <View style={{position: 'absolute', bottom: -30, left: 0, right: 0, paddingBottom: 40, paddingHorizontal: 12, alignItems: 'center', justifyContent: 'center'}}>
               <TouchableOpacity style={{borderWidth:1, borderColor: '#01AEB6', padding: 12, borderRadius: 13, width:'100%', alignItems: 'center', justifyContent: 'center'}} onPress={handleNext}>
                 <Text style={{color: '#01AEB6', fontSize: 16, lineHeight: 24, fontWeight: 'bold'}}>Suivant</Text>
               </TouchableOpacity>
             </View>
             {contactModal()}
+          </ScrollView>
         </SafeAreaView>
     );
 };

@@ -1,4 +1,26 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import * as SecureStore from 'expo-secure-store';
+
+export async function saveContante(key: string, value: string) {
+  await SecureStore.setItemAsync(key, value);
+}
+
+export async function getConstante(key: string) {
+  const value = await SecureStore.getItemAsync(key);
+  console.log("value", value)
+  const data = JSON.parse(value as string);
+  return data;
+}
+
+export async function deleteConstante(key: string) {
+  await SecureStore.deleteItemAsync(key);
+}
+
+
+
+
+
+
 
 export const storeNumCompte = async (course: any) => {
   try {

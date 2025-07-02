@@ -53,4 +53,12 @@ export const temp = pgTable('temp', {
     code_verification: integer('code_verification').default(0).notNull(),
     date_expiration: timestamp('date_expiration').notNull()
 })
+
+export const logs_erreurs = pgTable("logs_erreurs", {
+    id: serial("id").primaryKey(),
+    message: text("message").notNull(),
+    stack: text("stack"),
+    route: text("route"),
+    created_at: timestamp("created_at").defaultNow(),
+  });
 //npx drizzle-kit push

@@ -3,12 +3,13 @@ import React, { useEffect, useState } from 'react'
 import {AntDesign, FontAwesome5, FontAwesome, Feather, Entypo, Ionicons } from '@expo/vector-icons';
 import "../../global.css"
 import {styles} from '../assets/css/home'
-import { getUserDatas, storeData } from '../services/AsyncStorage';
+import { getConstante, getUserDatas, saveContante, storeData } from '../services/AsyncStorage';
 import { useFocusEffect } from '@react-navigation/native';
 import { getAllPub, getUserOnline,  getLastTransaction } from '../services/OnlineDB';
 import * as Network from 'expo-network';
 import { addEventListener } from "@react-native-community/netinfo";
-import { update_user } from '../services/localDB';
+import { getAllUserTransaction, update_user } from '../services/localDB';
+import { getPub } from '../services/apiService';
 
 const Home = ({navigation}:any) => {
 
@@ -22,20 +23,45 @@ const Home = ({navigation}:any) => {
 
     // Chargement des données utilisateur au montage
     const fetchUserData = async () => {
-        const userData = await getUserDatas();
-        console.log(userData)
-        setUser(userData);
+        // const userData = await getUserDatas();
+        const userData = await getConstante("user");
+        console.log("home", userData)
+        await setUser(userData);
     };
 
-    // Récupération des données de publication
-    const getPub = async () => {
-        setPub(await getAllPub())
+    // Récupération des données de publicité
+    const getAllPub = async () => {
+        // console.log(await getPub)
+        await getPub()
+        .then((res) => {
+            // console.log(res.data?.pubs)
+            setPub(res.data?.pubs)
+        })
+        .catch((err) => {
+            console.log('error pub', err.message)
+            if (err.response) {
+                console.log('Réponse erreur:', err.response.data);
+                console.log('Code erreur:', err.response.status);
+              } else {
+                console.log('Erreur inconnue:', err);
+              }
+        })
+        // setPub(await getAllPub())
     }
 
     const getTransaction = async () => {
-        setTransaction(await getLastTransaction())
-        console.log(await getLastTransaction())
+        setTransaction(await getAllUserTransaction())
+        // console.log(await getLastTransaction())
     }
+
+    useFocusEffect(
+        React.useCallback(() => {
+            fetchUserData();
+
+            getAllPub()
+            getTransaction()
+        }, [])
+    )
 
     // Vérification de la connexion à Internet
     useEffect(() => {
@@ -63,21 +89,10 @@ const Home = ({navigation}:any) => {
             // console.log(isConnected)
             // setIsConnected(networkState.isConnected ?? false);
 
-            if (isConnected && currentUser?.num_compte) {
-                const res: any = await getUserOnline();
-                // console.log(res);
-                if(res)
-                {
-                    if(parseInt(res[0]?.solde) != parseInt(currentUser?.solde))
-                    {
-                        //console.log(res[0]?.solde)
-                        await update_user(res[0]);
-
-                        const res_user = await getUserDatas();
-                        setUser(res_user)
-                        //setSolde(res_user[0].solde === null ? 0 : parseInt(res_user[0].solde))
-                    }
-                }
+            if (isConnected) {
+                setRefreshing(true)
+                await getTransaction()
+                setRefreshing(false)
             }
         } catch (error) {
             console.error("Failed to get network status:", error);
@@ -87,26 +102,20 @@ const Home = ({navigation}:any) => {
 
         const startChecking = () => {
             checkConnection(); // Appel initial
-            interval = setInterval(checkConnection, 1000); // Vérification périodique
+            // interval = setInterval(checkConnection, 1000); // Vérification périodique
         };
 
         startChecking();
 
-        return () => clearInterval(interval); // Nettoyage
+        // return () => clearInterval(interval); // Nettoyage
     }, [currentUser]);
 
-    useFocusEffect(
-        React.useCallback(() => {
-            fetchUserData();
 
-            getPub()
-            getTransaction()
-        }, [])
-    )
 
     
     const handleValide = async (action:string) => {
-        await storeData({action: action})
+        // await storeData({action: action})
+        await saveContante('data', JSON.stringify({action: action}))
         navigation.navigate('ChoixNumero')
     }
 
@@ -146,7 +155,7 @@ const Home = ({navigation}:any) => {
 
                 <View style={{marginTop: 20, alignItems: 'center', flexDirection: 'row', gap: 10, marginLeft: 10}}>
                     {/* <Image source={require('../assets/images/hello.png')} style={{width: 40, height: 40, borderRadius: 50}} /> */}
-                    <Text style={{color: 'white', fontWeight: 'bold', fontSize: 24}}> 👋 Hey, {currentUser?.nom_complet || currentUser?.nomcomplet}</Text>
+                    <Text style={{color: 'white', fontWeight: 'bold', fontSize: 24}}> 👋 Hey, {currentUser?.nomcomplet}</Text>
                 </View>
 
                 <View style={styles.BtnGroup}>
@@ -156,7 +165,7 @@ const Home = ({navigation}:any) => {
                         <Text style={styles.BtnText}>Transfert</Text>
                     </TouchableOpacity>
 
-                    <TouchableOpacity style={styles.Btn} onPress={() => handleValide('Achat d\'unités')}>
+                    <TouchableOpacity style={styles.Btn} onPress={() => alert('Bientôt disponible...')}>
                         <Ionicons name="gift-outline" size={24} color="white" />
                         <Text style={styles.BtnText}>Cadeaux</Text>
                     </TouchableOpacity>
@@ -165,7 +174,7 @@ const Home = ({navigation}:any) => {
 
                 <View style={[styles.body, {height: heightScreen}]}>
 
-                    {isConnected && 
+                    {pub.length &&
                     
                         <View style={[styles.pub, {width: widthScreen}]}>
                             
@@ -197,7 +206,7 @@ const Home = ({navigation}:any) => {
 
                         <View style={{flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between'}}>
                             <Text style={{fontSize: 17, fontWeight: 'bold'}}>Mes dernières transactions</Text>
-                            <TouchableOpacity>
+                            <TouchableOpacity onPress={() => navigation.navigate('Historique')}>
                                 <Text style={{color: '#01AEB6'}}>Voir tout</Text>
                             </TouchableOpacity>
                         </View>
@@ -206,7 +215,7 @@ const Home = ({navigation}:any) => {
 
                             {transaction && transaction.length > 0 ? (
                                 <FlatList
-                                    data={transaction}
+                                    data={transaction.slice(0, 100)}
                                     keyExtractor={(item) => item.id}
                                     style={{height: '100%'}}
                                     renderItem={({item}) => {

@@ -1,9 +1,10 @@
 import { View, Text, SafeAreaView, ScrollView, TextInput, TouchableOpacity, ActivityIndicator, Alert } from 'react-native'
 import React, { useState } from 'react'
 import {AntDesign, Entypo} from '@expo/vector-icons';
-import { login } from '../services/OnlineDB';
-import { storeUserDatas } from '../services/AsyncStorage';
+// import { login } from '../services/OnlineDB';
+import { saveContante, storeUserDatas } from '../services/AsyncStorage';
 import { styles } from '../assets/css/connexion'
+import { login } from '../services/apiService';
 
 const Connexion = ({navigation}:any) => {
 
@@ -11,43 +12,103 @@ const Connexion = ({navigation}:any) => {
     const [security, setSecurity] = useState(true)
 
     const [userData, SetUserData] = useState({
-        phoneNumber: '',
-        password: ''
+        numero: '',
+        // password: ''
     })
 
     const handleLogin = async () => {
         SetLoading(true)
 
-        if(userData.password === '' && userData.phoneNumber === '')
+        if(userData.numero === '')
         {
-            Alert.alert('Erreur de connexion', 'Veuillez renseigner votre numéro de téléphone et votre mot de passe')
+            Alert.alert('Erreur de connexion', 'Veuillez renseigner votre numéro de téléphone')
             SetLoading(false)
             return
         }
 
         const regex = /^(07|05|01)[0-9]{8}$/
-        if(!regex.test(userData.phoneNumber))
+        if(!regex.test(userData.numero))
         {
             Alert.alert('Erreur de connexion', 'Veuillez entrer un numéro de téléphone valide')
             SetLoading(false)
             return
         }
 
-        const res:any = await login(userData)
+        // const res:any = await login(userData)
+        
+        await login(userData)
+        .then((res) => {
+            if(res.status == 200)
+            {
+                Alert.alert(
+                    "Confirmation",
+                    `${res.data?.message}`,
+                    [
+                        {
+                            text: "Ok",
+                            // style: "cancel",
+                            onPress: async () => {
+                                await saveContante("numero", JSON.stringify(userData.numero))
+                                SetLoading(false)
+                                navigation.navigate('Confirmation')
+                            }
+                        },
+                        // {
+                        //     text: "Oui",
+                        //     onPress: async () => {
+                        //         setLoading(true)
 
-        if(res === null)
-        {
-            Alert.alert('Erreur de connexion', 'Utilisateur ou mot de passe incorrect')
-        }
-        else if(res?.id)
-        {
-            await storeUserDatas(res)
-            navigation.navigate('Confirmation')
-        }
-        else
-        {
-            Alert.alert('Erreur', 'Une erreur est survenue lors de la connexion')
-        }
+                        //         //On enregistre les infos de l'utilisateur après vérification
+                        //         const res:any = await resendCode()
+                        //         console.log('res', res)
+                        //         if(res === true)
+                        //         {
+                        //             setLoading(false)
+                        //             setStopTimer(false)
+                        //             setMinutes(2)
+                        //             alert('Un code a été envoyé à votre téléphone.')
+                        //         }
+                        //         else
+                        //         {       
+                        //             setLoading(false)
+                        //             alert('Une erreur est survenue, veuillez réessayer.')
+                        //         }
+                        //     }
+                        // }
+                    ]
+                )
+            }
+            else
+            {
+                alert(`${res.data?.message}`)
+                SetLoading(false)
+            }
+            console.log(res.status)
+        })
+        .catch((err) => {
+            SetLoading(false)
+            if (err.response?.status === 401) {
+                alert(`${err.response?.data?.error}`);
+              } else {
+                alert("Une erreur est survenue, vérifie ta connexion");
+              }
+        })
+
+        
+
+        // if(res === null)
+        // {
+        //     Alert.alert('Erreur de connexion', 'Utilisateur ou mot de passe incorrect')
+        // }
+        // else if(res?.id)
+        // {
+        //     await storeUserDatas(res)
+        //     navigation.navigate('Confirmation')
+        // }
+        // else
+        // {
+        //     Alert.alert('Erreur', 'Une erreur est survenue lors de la connexion')
+        // }
         SetLoading(false)
     }
 
@@ -70,8 +131,8 @@ const Connexion = ({navigation}:any) => {
                             autoCapitalize='none'
                             autoCorrect={false}
                             keyboardType='phone-pad'
-                            value={userData.phoneNumber}
-                            onChangeText={(e) => SetUserData({...userData, phoneNumber:e})}
+                            value={userData.numero}
+                            onChangeText={(e) => SetUserData({...userData, numero:e})}
                             style={{padding: 12, width: '90%', fontSize: 18}}
                         />
                     </View>

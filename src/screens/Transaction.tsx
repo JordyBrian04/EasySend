@@ -9,7 +9,7 @@ import React, {
 import { Text, View, StyleSheet, SafeAreaView, TouchableOpacity, TextInput, Dimensions, ScrollView, StatusBar, KeyboardAvoidingView, Image, Switch, Platform } from 'react-native';
 import { styles } from '../assets/css/transaction';
 import {AntDesign, FontAwesome, Octicons } from '@expo/vector-icons';
-import { getData, getUserDatas, storeData } from '../services/AsyncStorage';
+import { getConstante, getData, getUserDatas, saveContante, storeData } from '../services/AsyncStorage';
 import { useFocusEffect } from '@react-navigation/native';
 import { SelectList } from 'react-native-dropdown-select-list'
 import { BottomSheetModal, BottomSheetModalProvider } from '@gorhom/bottom-sheet'
@@ -37,7 +37,8 @@ const Transaction = ({navigation}:any) => {
     
 
     const getDatas = async () => {
-        const res:any = await getData();
+        // const res:any = await getData();
+        const res:any = await getConstante("data");
         console.log(res[0])
         setDatas(res[0])
     }
@@ -101,7 +102,8 @@ const Transaction = ({navigation}:any) => {
                     }
                 ]
                 // console.log(data)
-                await storeData(data)
+                // await storeData(data)
+                await saveContante("data", JSON.stringify(data))
                 navigation.navigate('Traitement')
             }
             else
@@ -117,7 +119,7 @@ const Transaction = ({navigation}:any) => {
         <ScrollView contentContainerStyle={{flexGrow: 1}} style={styles.container}>
             <StatusBar barStyle={'dark-content'} />
             <View style={styles.header}>
-                    <TouchableOpacity onPress={() => navigation.navigate('Home')}>
+                    <TouchableOpacity onPress={() => navigation.navigate('Tabs')}>
                         <AntDesign name="arrowleft" size={32} color="black" />
                     </TouchableOpacity>
                     <View style={{flex: 1, alignItems: 'center', justifyContent: 'center', width: '90%'}}>

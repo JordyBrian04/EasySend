@@ -1,4 +1,4 @@
-import { View, Text, SafeAreaView, ScrollView, TouchableOpacity, Image, Modal, TouchableWithoutFeedback } from 'react-native'
+import { View, Text, SafeAreaView, ScrollView, TouchableOpacity, Image, Modal, TouchableWithoutFeedback, KeyboardAvoidingView, Platform } from 'react-native'
 import React, { useCallback } from 'react'
 import {AntDesign} from '@expo/vector-icons';
 import { getData, getUserDatas, storeData } from '../services/AsyncStorage';
@@ -44,17 +44,17 @@ const ChoixReseauDestinateur = ({navigation, route}:any) => {
 
     return (
         <SafeAreaView style={[styles.container, { backgroundColor: 'white' }]}>
+
             <View style={styles.header}>
-                <TouchableOpacity onPress={() => navigation.navigate("Home")}>
+                <TouchableOpacity onPress={() => navigation.navigate("Tabs")}>
                     <AntDesign name="arrowleft" size={32} color="black" />
                 </TouchableOpacity>
                 <Text style={{ color: '#1AEB6', padding: 12, borderRadius: 13, fontSize: 20, fontWeight: 'bold', marginLeft: 20 }}>{datas?.action}</Text>
             </View>
-
             <ScrollView style={[styles.box, { paddingRight: 12, paddingLeft: 12, paddingTop: 20 }]}>
                 <Text style={{ fontWeight: 'bold', fontSize: 20, lineHeight: 28 }}>Quel réseau recevra les {datas?.action == 'Transfert' ? 'fonds' : `unités`} ?</Text>
 
-                <View style={{ marginTop: 20 }}>
+                <KeyboardAvoidingView behavior='padding' keyboardVerticalOffset={Platform.OS == 'ios' ? 20 : 0} style={{ marginTop: 20 }}>
 
                     {/* Orange Money */}
                     <TouchableOpacity style={[styles.btn, { borderRadius: 12, padding: 20, alignItems: 'center', backgroundColor: '#e5e7eb', flexDirection: 'row', justifyContent: 'space-between', marginBottom: 12 }]} onPress={() => handleReseau("ORANGE")}>
@@ -99,7 +99,7 @@ const ChoixReseauDestinateur = ({navigation, route}:any) => {
                             <AntDesign name="right" size={17} color="#01AEB6" />
                         </View>
                     </TouchableOpacity>
-                </View>
+                </KeyboardAvoidingView>
             </ScrollView>
         </SafeAreaView>
     )

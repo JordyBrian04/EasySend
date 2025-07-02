@@ -1,4 +1,4 @@
-import { and, eq, or, desc, max, asc } from "drizzle-orm"
+import { and, eq, or, desc, max, asc, sql } from "drizzle-orm"
 import { db } from "../databases"
 import { utilisateur, pub, transaction, temp } from "../databases/schema"
 import { getAllUsers, insertUser } from "./localDB";
@@ -59,7 +59,7 @@ export const getUserOnline = async () => {
     try {
         const numero:any = await getAllUsers();
         const data = await db.select().from(utilisateur).where(eq(utilisateur.numero, numero?.numero))
-        // console.log(data)
+        // console.log(numero)
         return data
     } catch (error) {
         console.error(error)
@@ -142,6 +142,18 @@ export const insertTransaction = async (req: any) => {
         //Avoir les informations de l'utilisateur
         const user:any = await getUserDatas();
 
+        //On vérifie si c'est la première transaction de l'utilisateur
+        const countTransaction = await db.$count(transaction, eq(transaction.utilisateur_id, user.id))
+
+        if(countTransaction == 0)
+        {
+            //On récupère le code parrainage de son parrain
+            const userInfos:any = await getUserOnline()
+            
+            //On incrémente le nombre de parrainage validé du parrain
+            await db.execute(sql`update ${utilisateur} set ${utilisateur.parrainage_valide} = ${utilisateur.parrainage_valide}+1 where ${utilisateur.user_code_promo} = ${userInfos[0].signup_code_promo}`)
+        }
+
         const res = await db.insert(transaction).values({
             numero_transaction: numero_transaction,
             utilisateur_id: user.id,
@@ -183,7 +195,6 @@ export const getAllTransaction = async () => {
         const data = await db.select().from(transaction)
         .where(eq(transaction.utilisateur_id, user.id))
         .orderBy(desc(transaction.cree_le))
-        .limit(100)
         return data
     } catch (error) {
         console.error(error)
@@ -208,6 +219,13 @@ export const verifyCode = async (req: any) => {
         const data = await db.select().from(temp).where(and(eq(temp.compte, user.numero), eq(temp.code_verification, req.code))).orderBy(asc(temp.id))
         if(data.length > 0)
         {
+            const datas = [
+                {id: user.id, nom_complet: user.nomcomplet, numero: user.numero, code_parrainage: user.user_code_promo}
+            ]
+
+            const res = await insertUser(datas[0])
+            await storeUserDatas(datas)
+
             return data
         }
         else
@@ -236,4 +254,9 @@ export const resendCode = async () => {
         console.error(error)
         return null
     }
+}
+
+export const getUserCodeUsed = async (code:any) => {
+    const res:any = await await db.$count(utilisateur, eq(utilisateur.signup_code_promo, code))
+    return res
 }

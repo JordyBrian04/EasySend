@@ -3,7 +3,7 @@ import { Text, View, StyleSheet, SafeAreaView, ScrollView, TouchableOpacity, Ima
 import { AntDesign, FontAwesome, Entypo, Feather  } from '@expo/vector-icons';
 import { getTransaction } from '../services/OnlineDB';
 import { useFocusEffect } from '@react-navigation/native';
-import { getUserDatas } from '../services/AsyncStorage';
+import { getConstante, getUserDatas } from '../services/AsyncStorage';
 
 const Profil = ({navigation}: any) => {
 
@@ -12,8 +12,9 @@ const Profil = ({navigation}: any) => {
   const [nom, setNom] = React.useState<any>([])
 
   const fetchUserData = async () => {
-    const userData = await getUserDatas();
-    const nom = userData.nomcomplet
+    // const userData = await getUserDatas();
+    const userData = await getConstante("user");
+    const nom = userData.nomcomplet || userData.nom_complet
     setUser(userData)
     const words = nom.split(' ')
     setNom(words)

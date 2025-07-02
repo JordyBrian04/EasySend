@@ -1,6 +1,6 @@
 import * as React from 'react';
-import { Text, View, StyleSheet, SafeAreaView, TouchableOpacity, TextInput, Dimensions, FlatList, RefreshControl, Modal, TouchableWithoutFeedback, Image, Platform, KeyboardAvoidingView } from 'react-native';
-import { getData, getUserDatas, storeData } from '../services/AsyncStorage';
+import { Text, View, StyleSheet, SafeAreaView, TouchableOpacity, TextInput, Dimensions, FlatList, RefreshControl, Modal, TouchableWithoutFeedback, Image, StatusBar, KeyboardAvoidingView, Platform, ScrollView } from 'react-native';
+import { getConstante, getData, getUserDatas, saveContante, storeData } from '../services/AsyncStorage';
 import { useFocusEffect } from '@react-navigation/native';
 import { useCallback, useState } from 'react';
 import {AntDesign, FontAwesome, MaterialCommunityIcons, MaterialIcons } from '@expo/vector-icons';
@@ -24,12 +24,15 @@ const ChoixNumeroDestinataire = ({navigation}:any) => {
     const [reseau, setReseau] = useState('')
 
     const getDatas = async () => {
-        const res:any = await getData();
+        // const res:any = await getData();
+        const res:any = await getConstante('data')
+        console.log(res)
         setDatas(res[0])    
     }
 
     const getUser = async () => {
-        const res:any = await getUserDatas();
+        // const res:any = await getUserDatas();
+        const res:any = await getConstante('user');
         setUser(res)
     }
 
@@ -108,7 +111,11 @@ const ChoixNumeroDestinataire = ({navigation}:any) => {
       }
 
       const valideContact = async (num:any) => {
+
         // console.log('currentNumero', currentNumero)
+        // const data = [
+        //   {expediteur: num, action: datas?.action, reseau: reseau}
+        // ]
         const data = [
           {destinataire: num, action: datas?.action, reseau: datas?.reseau, expediteur: datas?.expediteur, reseauDestinataire: reseau}
         ]
@@ -117,8 +124,9 @@ const ChoixNumeroDestinataire = ({navigation}:any) => {
         setModalVisible(false)
         setOpen(false)
         ref.current?.scrollTo(0)
-        await storeData(data)
-        // navigation.navigate("Transaction")
+        // await storeData(data)
+        await saveContante("data", JSON.stringify(data))
+        // navigation.navigate("ChoixNumeroDestinataire")
       }
 
       const rechercherContact = (value:any) => {
@@ -167,29 +175,32 @@ const ChoixNumeroDestinataire = ({navigation}:any) => {
                 }}
             >
                 <TouchableWithoutFeedback onPress={() => setModalVisible(false)}>
-                    <View style={[styles.modalContainer, { backgroundColor: 'rgba(0,0,0,0.1)', alignItems: 'center', justifyContent: 'center' }]}>
-                        <View style={[styles.modalBox, { backgroundColor: 'white', width: '99%', zIndex: 20, padding: 12, position: 'absolute', bottom: 0, borderTopLeftRadius: 16, borderTopRightRadius: 16 }]}>
-                            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', padding: 8, gap: 20 }}>
-                                <View style={{ width: 32, height: 32, backgroundColor: '#3b82f6', alignItems: 'center', justifyContent: 'center', borderRadius: 100 }}>
-                                    <AntDesign name="user" size={24} color="white" />
-                                </View>
-                                <View style={{ width: '75%' }}>
-                                    <Text style={{ fontSize: 14, lineHeight: 20, fontWeight: 'bold' }}>
+                    <View style={styles.modalContainer}>
+                        <View style={styles.modalBox}>
+                            {/* Header */}
+                            <View style={{flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', padding: 8, gap:20}}>
+                                    <View style={{width: 32, height: 32, backgroundColor: '#3b82f6', alignItems: 'center', justifyContent: 'center', borderRadius: 100}}>
+                                      <AntDesign name="user" size={24} color="white" />
+                                    </View>
+                                    <View style={{width: '90%'}}>
+                                      <Text style={{fontSize: 14, lineHeight: 20, fontWeight: 'bold'}}>
                                         {numero && numero[0] && numero[0]?.name}
-                                    </Text>
-                                </View>
+                                      </Text>
+                                    </View>
                             </View>
-                            <View style={{ marginBottom: 16, marginTop: 24, width: '100%', overflow: 'scroll' }}>
-                                <FlatList
-                                    data={numero && numero[0].uniquePhoneNumbers}
-                                    keyExtractor={(item, index) => index.toString()}
-                                    renderItem={({ item }) => (
-                                        <TouchableOpacity style={{ padding: 8, borderBottomWidth: 1, borderBottomColor: '#4b5563', width: '100%' }} onPress={() => choixContact(item)}>
-                                            <Text>{item}</Text>
-                                        </TouchableOpacity>
-                                    )}
-                                />
+    
+                            <View style={{overflow: 'scroll', marginBottom: 16, marginTop: 24, width:'100%'}}>
+                            <FlatList
+                              data={numero && numero[0].uniquePhoneNumbers}
+                              keyExtractor={(item, index) => index.toString()}
+                              renderItem={({ item }) => (
+                                <TouchableOpacity style={{padding: 12, borderBottomWidth: 1, borderColor: '#4b5563', width:'100%'}} onPress={() => choixContact(item)}>
+                                  <Text>{item}</Text>
+                                </TouchableOpacity>
+                              )}
+                            />
                             </View>
+    
                         </View>
                     </View>
                 </TouchableWithoutFeedback>
@@ -203,8 +214,8 @@ const ChoixNumeroDestinataire = ({navigation}:any) => {
             alert('Veuillez sélectionner un réseau')
             return
           }
-        if(currentNumero){
 
+        if(currentNumero){
           switch (reseau)
           {
             case "ORANGE":
@@ -233,10 +244,9 @@ const ChoixNumeroDestinataire = ({navigation}:any) => {
                 break
           }
 
-
           navigation.navigate('Transaction')
         }else{
-          alert('Veillez entrer un numéro')
+          alert('Veuillez entrer un numéro svp')
         }
       }
 
@@ -246,14 +256,14 @@ const ChoixNumeroDestinataire = ({navigation}:any) => {
           alert('Veuillez sélectionner un réseau svp')
           return
         }
-        
-        const res = await getUserDatas()
 
+        // const res = await getUserDatas()
+        
         switch (reseau)
         {
           case "ORANGE":
             const regex = /^(07)[0-9]{8}$/
-            if(!regex.test(res.numero))
+            if(!regex.test(user.numero))
             {
               alert("Le numéro n'est pas un numéro orange")
               return
@@ -261,7 +271,7 @@ const ChoixNumeroDestinataire = ({navigation}:any) => {
             break
             case "MOOV":
               const regex1 = /^(01)[0-9]{8}$/
-              if(!regex1.test(res.numero))
+              if(!regex1.test(user.numero))
               {
                 alert("Le numéro n'est pas un numéro moov")
                 return
@@ -269,7 +279,7 @@ const ChoixNumeroDestinataire = ({navigation}:any) => {
               break
             case "MTN":
               const regex2 = /^(05)[0-9]{8}$/
-              if(!regex2.test(res.numero))
+              if(!regex2.test(user.numero))
               {
                 alert("Le numéro n'est pas un numéro MTN")
                 return
@@ -277,26 +287,37 @@ const ChoixNumeroDestinataire = ({navigation}:any) => {
               break
         }
 
+        // const data = [
+        //     {
+        //         expediteur: {name: user.nomcomplet, "phoneNumbers": [{number: user.numero}]},
+        //         action: datas.action,
+        //         reseau: reseau
+        //     }
+        // ]
         const data = [
-            {
-                destinataire: {name: res.nomcomplet, "phoneNumbers": [{number: res.numero}]},
-                action: datas.action,
-                reseau: datas.reseau,
-                expediteur: datas.expediteur,
-                reseauDestinataire: reseau
-            }
-        ]
-        await storeData(data)
+          {
+              destinataire: {name: user.nomcomplet, "phoneNumbers": [{number: user.numero}]},
+              action: datas.action,
+              reseau: datas.reseau,
+              expediteur: datas.expediteur,
+              reseauDestinataire: reseau
+          }
+      ]
+        // await storeData(data)
+        await saveContante("data", JSON.stringify(data))
         // console.log(data)
         navigation.navigate("Transaction")
     }
 
     return (
         <SafeAreaView style={styles.container}>
-            <View style={{paddingLeft: 12, paddingRight: 12}}>
+          <StatusBar barStyle='dark-content' />
+          <ScrollView contentContainerStyle={{flexGrow: 1}} style={{flex: 1}} showsHorizontalScrollIndicator={false}>
+
+            <KeyboardAvoidingView behavior='padding' keyboardVerticalOffset={Platform.OS == 'ios' ? 20 : 0} style={{paddingLeft: 12, paddingRight: 12}}>
 
                 <View style={styles.header}>
-                    <TouchableOpacity onPress={() => navigation.navigate('Home')}>
+                    <TouchableOpacity onPress={() => navigation.navigate('Tabs')}>
                         <AntDesign name="arrowleft" size={32} color="black" />
                     </TouchableOpacity>
                     <View style={{flex: 1, alignItems: 'center', justifyContent: 'center', width: '90%'}}>
@@ -304,9 +325,7 @@ const ChoixNumeroDestinataire = ({navigation}:any) => {
                     </View>
                 </View>
 
-                <KeyboardAvoidingView behavior='padding' keyboardVerticalOffset={Platform.OS == 'ios' ? 20 : 0} style={styles.box}>
-
-                <Text style={{fontWeight: 'bold', fontSize: 20, lineHeight: 28, marginLeft: 12}}>Choisissez le réseau du destinataire</Text>
+                <Text style={{fontWeight: 'bold', fontSize: 20, lineHeight: 28, marginLeft: 12}} >Sélectionnez le réseau du destinataire </Text>
 
                 <View style={{flexDirection: 'row', justifyContent: 'center', alignItems: 'center', gap: 20, padding: 20, marginBottom: 30}}>
                     
@@ -341,9 +360,11 @@ const ChoixNumeroDestinataire = ({navigation}:any) => {
                       </View>
                         <Text style={{fontWeight: 400, fontSize: 20}}>Moov</Text>
                     </TouchableOpacity>
+
+
                 </View>
 
-                <Text style={{fontWeight: 'bold', fontSize: 20, lineHeight: 28, marginLeft: 12}}>Selectionnez son numéro</Text>
+                <Text style={{fontWeight: 'bold', fontSize: 20, lineHeight: 28, marginLeft: 12}} >Selectionnez son numéro</Text>
 
                 <TouchableOpacity style={styles.box} onPress={handleMoiMeme}>
                   <View style={{flexDirection: 'row', alignItems: 'center', gap: 10, width:'90%'}}>
@@ -371,11 +392,11 @@ const ChoixNumeroDestinataire = ({navigation}:any) => {
                         <MaterialCommunityIcons name="contacts" size={30} color="black" />
                     </TouchableOpacity>
                 </View>
-                </KeyboardAvoidingView>
-            </View>
-            <View style={{ height: SCREEN_HEIGHT, width: SCREEN_WIDTH, display: open ? 'flex' : 'none', position: 'absolute', backgroundColor: "rgba(0,0,0,0.17)" }}></View>
+
+            </KeyboardAvoidingView>
+            <View style={{height: SCREEN_HEIGHT, width: SCREEN_WIDTH, display: open ? 'flex' : 'none', position: 'absolute', backgroundColor:"#0000002a"}}></View>
             <BottomSheet ref={ref}>
-                <View style={{padding: 12, width: '100%'}}>
+                <View style={{padding: 12}}>
 
                 <TextInput
                     style={{borderWidth: 1, borderColor: '#01AEB6', height: 48, fontSize: 14, lineHeight: 20, color: '#1f2937', borderRadius: 13, padding: 10}}
@@ -387,24 +408,24 @@ const ChoixNumeroDestinataire = ({navigation}:any) => {
                     onChangeText={(e) => rechercherContact(e)}
                 />
 
-                <Text style={{ fontSize: 16, lineHeight: 24, marginBottom: 12, marginTop: 12 }}>Selectionnez un contact ({contacts.length})</Text>
+                <Text style={{fontSize: 16, lineHeight: 24, marginBottom: 12, marginTop: 12}}>Selectionnez un contact ({contacts.length})</Text>
                     <FlatList
                         data={contacts}
                         keyExtractor={(item) => item.id}
                         style={{paddingBottom:20, marginBottom:20, marginTop:6}}
                         renderItem={({ item }) => (
                         <TouchableOpacity
-                        style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, paddingVertical: 8, borderBottomWidth: 1, borderBottomColor: '#4b5563', width: '100%'}}
+                        style={{flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingLeft: 16, paddingRight: 16, paddingTop: 12, paddingBottom: 12, borderBottomWidth: 1, borderColor: '#4b5563'}}
                             onPress={() => handleContact(item.id)}
                         >
-                            <View style={{ width: 32, height: 32, backgroundColor: '#3b82f6', alignItems: 'center', justifyContent: 'center', borderRadius: 100 }}>
+                            <View style={{width: 32, height: 32, backgroundColor: '#3b82f6', alignItems: 'center', justifyContent: 'center', borderRadius: 100}}>
                             <AntDesign name="user" size={24} color="white" />
                             </View>
-                            <View style={{ width: '75%' }}>
-                            <Text style={{ fontSize: 14, lineHeight: 20, fontWeight: 'bold' }}>
+                            <View style={{width: '75%'}}>
+                            <Text style={{fontSize: 14, lineHeight: 20, fontWeight: 'bold'}}>
                                 {item.name}
                             </Text>
-                            <Text style={{ fontSize: 14, lineHeight: 20, fontWeight: 'bold' }}>
+                            <Text style={{fontSize: 14, lineHeight: 20, fontWeight: 'bold'}}>
                                 {item.phoneNumbers && item.phoneNumbers[0] && item.phoneNumbers[0].number}
                             </Text>
                             </View>
@@ -421,12 +442,13 @@ const ChoixNumeroDestinataire = ({navigation}:any) => {
                 </View>
             </BottomSheet>
 
-            <View style={{position: 'absolute', bottom: 0, left: 0, right: 0, paddingBottom: 40, paddingHorizontal: 12, alignItems: 'center', justifyContent: 'center'}}>
+            <View style={{position: 'absolute', bottom: -30, left: 0, right: 0, paddingBottom: 40, paddingHorizontal: 12, alignItems: 'center', justifyContent: 'center'}}>
               <TouchableOpacity style={{borderWidth:1, borderColor: '#01AEB6', padding: 12, borderRadius: 13, width:'100%', alignItems: 'center', justifyContent: 'center'}} onPress={handleNext}>
                 <Text style={{color: '#01AEB6', fontSize: 16, lineHeight: 24, fontWeight: 'bold'}}>Suivant</Text>
               </TouchableOpacity>
             </View>
             {contactModal()}
+          </ScrollView>
         </SafeAreaView>
     );
 };
@@ -437,7 +459,7 @@ const styles = StyleSheet.create({
     container:{
         flex: 1,
         padding: 20,
-        backgroundColor: '#fff'
+        backgroundColor: '#FFFFFF'
     },
     header:{
         flexDirection: 'row',
@@ -457,7 +479,8 @@ const styles = StyleSheet.create({
         backgroundColor: '#F5F5F5',
         marginTop: 15,
         borderRadius: 13,
-        alignItems: 'center'
+        alignItems: 'center',
+        height: 58
     },
     inputBox:{
         flexDirection: 'row',
@@ -475,8 +498,7 @@ const styles = StyleSheet.create({
         borderColor: '#F5F5F5',
         borderRadius: 13,
         paddingHorizontal: 12,
-        color: '#6b7280',
-
+        color: '#6b7280'
     },
     modalContainer:{
         flex:1,

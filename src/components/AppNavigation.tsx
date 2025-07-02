@@ -6,7 +6,8 @@ import { createDrawerNavigator, DrawerContentScrollView, DrawerItem } from '@rea
 import * as SQLite from 'expo-sqlite';
 import "../../global.css"
 import { useFonts } from "expo-font";
-import {AntDesign, Feather, FontAwesome, MaterialCommunityIcons} from '@expo/vector-icons';
+import {AntDesign, Entypo, Feather, FontAwesome, Ionicons, MaterialCommunityIcons, MaterialIcons} from '@expo/vector-icons';
+import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 
 
 import SplashScreen from '../screens/SplashScreen';
@@ -23,12 +24,21 @@ import Traitement from '../screens/Traitement';
 import DetailTransaction from '../screens/DetailTransaction';
 import Confirmation from '../screens/Confirmation';
 import Profil from '../screens/Profil';
-import { getUserDatas, storeNumCompte, storeUserDatas } from '../services/AsyncStorage';
+import Parrainage from '../screens/Parrainage';
+import Historique from '../screens/Historique';
+import FAQ from '../screens/ServiceClient';
+import ResultatTransaction from '../screens/ResultatTransaction';
+
+
+// import { getUserDatas, storeNumCompte, storeUserDatas } from '../services/AsyncStorage';
+import { saveContante, getConstante, storeData, deleteConstante } from '../services/AsyncStorage';
+import { synchroTransaction } from '../services/localDB';
 
 
 const Stack = createNativeStackNavigator();
 const db = SQLite.openDatabaseAsync('local_easy_send.db');
 const Drawer = createDrawerNavigator()
+const TabStack = createBottomTabNavigator()
 
 
 const AppNavigation = () => {
@@ -51,39 +61,68 @@ const AppNavigation = () => {
         try {
             (await db).execAsync(`
                 PRAGMA journal_mode = WAL;
-                CREATE TABLE IF NOT EXISTS user (
+                CREATE TABLE IF NOT EXISTS easy_send_user (
                     id INTEGER PRIMARY KEY AUTOINCREMENT,
-                    nom_complet TEXT NOT NULL,
-                    numero TEXT NOT NULL
+                    nomcomplet TEXT NOT NULL,
+                    numero TEXT NOT NULL,
+                    code_parrainage TEXT NOT NULL,
+                    date_naissance DATE NULL
+                );
+
+                CREATE TABLE IF NOT EXISTS easy_send_transaction (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    numero_transaction TEXT NOT NULL,
+                    utilisateur_id INTEGER NOT NULL,
+                    type_transaction TEXT NOT NULL,
+                    numero_compte_source TEXT NOT NULL,
+                    numero_compte_destination TEXT NOT NULL,
+                    montant DOUBLE NOT NULL,
+                    frais DOUBLE NOT NULL,
+                    reseau_depart TEXT NOT NULL,
+                    reseau_arrive TEXT NOT NULL,
+                    etat INTEGER NOT NULL,
+                    cree_le TIMESTAMP NOT NULL
                 );
             `);
 
+            // refresh_token TEXT
+            // access_token TEXT,
+            // ALTER TABLE easy_send_user ADD access_token TEXT;
+            // ALTER TABLE easy_send_user ADD refresh_token TEXT;
+
             console.log('Database initialized successfully');
             try {
-                // await (await db).runAsync('DELETE FROM user')
+                //await (await db).runAsync('DELETE FROM easy_send_user')
                 // await (await db).runAsync("UPDATE user_local SET mdp='1234'")
-                const get_user:any = await (await db).getFirstAsync('SELECT * FROM user');
+                const get_user:any = await (await db).getFirstAsync('SELECT * FROM easy_send_user');
                 console.log('userdata ',get_user)
                 if(get_user)
-                  {
-                  await storeNumCompte(get_user?.numero)
-                  await storeUserDatas(get_user)
-                  return 'Home'
+                {
+                  await saveContante("numero", JSON.stringify(get_user?.numero))
+                  await saveContante("user", JSON.stringify(get_user))
+                  await synchroTransaction()
+                  // await storeNumCompte(get_user?.numero)
+                  // await storeUserDatas(get_user)
+                  // return 'Home'
+                  return 'Tabs'
                 }
                 else
                 {
+                  await deleteConstante("token")
+                  await deleteConstante("numero")
+                  await deleteConstante("user")
                   return 'SplashScreen'
                 }
-                console.log('userdata ',get_user)
-                setInitialRoute(get_user ? 'LockScreen' : 'Connexion');
+                // console.log('userdata ',get_user)
+                // setInitialRoute(get_user ? 'LockScreen' : 'Connexion');
               } catch (error) {
                 console.log('Error : ', error);
                 return 'Connexion'
               }
             // await (await db).runAsync("UPDATE user SET nom_complet='Jordy Brian', numero='0797799890'")
             // await (await db).runAsync('DELETE FROM user')
-            const get_user:any = await (await db).getFirstAsync('SELECT * FROM user');
-            console.log('userdata ',get_user)
+            // const get_user:any = await (await db).getFirstAsync('SELECT * FROM user');
+            // console.log('userdata ',get_user)
         } catch (error) {
             Alert.alert("Erreur de la création de la Base de données")
             console.log('Database not created : ', error);
@@ -91,23 +130,31 @@ const AppNavigation = () => {
     }
 
     const fetchUserData = async () => {
-      const userData = await getUserDatas();
+      // const userData = await getUserDatas();
+      const userData = await getConstante("user");
+      console.log('userData', userData)
       setUser(userData)
-      const nom = userData.nomcomplet
+      const nom = userData.nom_complet || userData.nomcomplet
       const words = nom.split(' ')
       const initials = words.slice(0, 2).map((word: any) => word.charAt(0))
       const initialsString = initials.join('')
       setInitiales(initialsString)
-      console.log('draw ',initialsString)
+      // console.log('draw ',initialsString)
   };
 
-    // useEffect(() => {
-    //     initDatabase();
-    // }, []);
+    //  useEffect(() => {
+    //     setTimeout( async () => {
+    //       if(user)
+    //       {
+    //         await synchroTransaction()
+    //       }
+    //     }, 10000)
+    // })
+
     useEffect(() => {
         const initialize = async () => {
           const route:any = await initDatabase();
-          console.log('route : ', route)
+          // console.log('route : ', route)
           setInitialRoute(route);
         };
         initialize();
@@ -161,7 +208,7 @@ const AppNavigation = () => {
                         <AntDesign name="right" size={17} color="#01AEB6" />
                       </TouchableOpacity>
 
-                      <TouchableOpacity style={{flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', width: '75%'}}>
+                      <TouchableOpacity style={{flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', width: '75%'}} onPress={() => props.navigation.navigate('Parrainage')}>
                         <View style={{flexDirection: 'row', alignItems: 'center', gap: 15}}>
                           <AntDesign name="sharealt" size={24} color="black" />
                           <Text style={{fontSize: 20}}>Partager l'app</Text>
@@ -230,20 +277,110 @@ const AppNavigation = () => {
         )
       }
 
+      const screenOptions:any = ({route, focus}:any) => ({
+        tabBarIcon : ({focused}:any) => {
+            const [image, setImage] = useState("")
+            let icon: any = null;
+            const size = 24
+            const color = focused ? "#188E94" : "#838383";
+            const font = focused ? <View></View> : <View></View>
+      
+            // db.transaction(tx => {
+            //   tx.executeSql(
+            //     "SELECT image from data LIMIT 1", 
+            //     [],
+            //     (_, result) => {
+            //       //console.log(result.rows._array[0].image);
+            //       setImage(result.rows._array[0].image)
+            //     },
+            //     (_, err) => {
+            //       console.log(err);
+            //       return false;
+            //     }
+            //   )
+            // })
+          
+            switch (route.name) {
+              case "Accueil":
+                icon =
+                      <View>
+                          {/* <Text>Accueil</Text> */}
+                          <AntDesign name="home" size={24} color={color} />
+                      </View>
+                break;
+              case "Historique":
+                  icon =                       
+                    <View>
+                        {/* <Text>{route.name}</Text> */}
+                        <MaterialCommunityIcons name="history" size={24} color={color} />
+                    </View>
+                break;
+              case "FAQ":
+                  icon =
+                      <View>
+                        {/* <Text>{route.name}</Text> */}
+                        <AntDesign name="customerservice" size={24} color={color} />
+                      </View>
+                break;
+              case "Profil":
+                  icon = 
+                    <View>
+                      {/* <Text>{route.name}</Text> */}
+                      <AntDesign name="user" size={24} color={color} />
+                    </View>
+                break;
+            }
+          
+            return icon
+          }, 
+        
+          tabBarActiveTintColor: '#188E94',
+          tabBarInactiveTintColor: '#5C5E5F',
+          tabBarLabelStyle: {
+            fontSize: 13,
+            display: 'flex'
+          },
+          tabBarStyle: {
+            backgroundColor: "#ffffff",
+            width: 'full',
+            height: 80,
+          },
+        })
+
+        const TabStackScreens = () => {
+          return (
+            <TabStack.Navigator initialRouteName='Accueil' screenOptions={screenOptions}>
+              <TabStack.Screen name="Accueil" component={HomeWithDrawer} options={{headerShown: false}} />
+              <TabStack.Screen options={{ headerShown: false }} name="Historique" component={Historique} />
+              <TabStack.Screen options={{ headerShown: false }} name="FAQ" component={FAQ} />
+              <TabStack.Screen options={{ headerShown: false }} name="Profil" component={Profil} />
+            </TabStack.Navigator>
+          )
+        }
+
       if (!initialRoute) {
         // Afficher l'écran de chargement tant que l'initialisation n'est pas terminée
         return <LoadingScreen />;
       }
 
+      const linking = {
+        prefixes: ['http://127.0.0.1/parrainage'],
+        config: {
+          screens: {
+            RegisterScreen: 'Inscription/:inviteCode',
+          },
+        },
+      }
 
     return (
-        <NavigationContainer>
+        <NavigationContainer linking={linking}>
           {/* <Stack.Navigator initialRouteName={initialRoute}> */}
             <Stack.Navigator initialRouteName={initialRoute}>
                 <Stack.Screen name="SplashScreen" component={SplashScreen} options={{headerShown: false, gestureEnabled: false}}/>
                 <Stack.Screen name="Connexion" component={Connexion} options={{headerShown: false, gestureEnabled: false}}/>
                 <Stack.Screen name="Inscription" component={Inscription} options={{headerShown: false}}/>
-                <Stack.Screen name="Home" component={HomeWithDrawer} options={{headerShown: false, gestureEnabled: false}}/>
+                <Stack.Screen options={{headerShown: false}} name="Tabs" component={TabStackScreens}/>
+                {/* <Stack.Screen name="Home" component={HomeWithDrawer} options={{headerShown: false, gestureEnabled: false}}/> */}
                 <Stack.Screen name="ChoixReseau" component={ChoixReseau} options={{headerShown: false}}/>
                 <Stack.Screen name="ChoixContact" component={ChoixContact} options={{headerShown: false}}/>
                 <Stack.Screen name="Transaction" component={Transaction} options={{headerShown: false}}/>
@@ -254,6 +391,8 @@ const AppNavigation = () => {
                 <Stack.Screen name="DetailTransaction" component={DetailTransaction} options={{headerShown: false}}/>
                 <Stack.Screen name="Confirmation" component={Confirmation} options={{headerShown: false}}/>
                 <Stack.Screen name="Profil" component={Profil} options={{headerShown: false}}/>
+                <Stack.Screen name="Parrainage" component={Parrainage} options={{headerShown: false}}/>
+                <Stack.Screen name="ResultatTransaction" component={ResultatTransaction} options={{headerShown: false}}/>
             </Stack.Navigator>
         </NavigationContainer>
     )

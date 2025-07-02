@@ -2,12 +2,14 @@ import * as React from 'react';
 import { Text, View, StyleSheet, SafeAreaView, TouchableOpacity, KeyboardAvoidingView, Platform, ActivityIndicator, ScrollView } from 'react-native';
 import AntDesign from '@expo/vector-icons/AntDesign';
 import { OtpInput } from "react-native-otp-entry";
-import { resendCode, verifyCode } from '../services/OnlineDB';
-import { getUserDatas } from '../services/AsyncStorage';
+// import { resendCode, verifyCode } from '../services/OnlineDB';
+import { getUserDatas, saveContante, getConstante } from '../services/AsyncStorage';
+import { getUser, resendCode, verifyCode } from '../services/apiService';
+import { insertUser } from '../services/localDB';
 
 const Confirmation = ({navigation}:any) => {
 
-    const userData = getUserDatas()
+    const [numero, setNumero] = React.useState('')
 
     const [code, setCode] = React.useState('');
     const [loading, setLoading] = React.useState(false)
@@ -17,6 +19,12 @@ const Confirmation = ({navigation}:any) => {
 
     const handleCode = (text:any) => {
         setCode(text);
+    }
+
+    const getNumero = async () => {
+        const res = await getConstante("numero")
+        console.log(res)
+        setNumero(res)
     }
 
     React.useEffect(() => {
@@ -41,7 +49,8 @@ const Confirmation = ({navigation}:any) => {
     }, [minutes, stopTimer]);
 
     React.useEffect(() => {
-        console.log(code.length)
+        getNumero()
+        // console.log(code.length)
         if(code.length == 5)
         {
             handleConfirm()
@@ -50,42 +59,101 @@ const Confirmation = ({navigation}:any) => {
 
     const handleConfirm = async () => {
         setLoading(true)
-        const res:any = await verifyCode({code: code})
-        console.log('res', res)
-        if(res && res.length > 0)
-            {
-                if(res[0].date_expiration < new Date())
+        // console.log("numero")
+        // const numero = await getConstante("numero")
+        // console.log(numero)
+        await verifyCode({code: code, numero: numero})
+        .then(async (res) => {
+            setLoading(false)
+            console.log(res)
+            const token = res.data.token
+            const refreshToken = res.data.refreshToken
+            // saveContante("token", JSON.stringify(res.data.token))
+
+            //On recupère les informations de l'utilisateur
+            await getUser({numero: numero})
+            .then(async (res) => {
+                const datas = [
+                    {id: res.data?.user?.id, nomcomplet: res.data?.user?.nomcomplet, numero: res.data?.user?.numero, code_parrainage: res.data?.user?.user_code_promo, date_naissance: res.data?.user?.date_naissance}
+                ]
+
+                const result = await insertUser(datas[0])
+                if(result)
                 {
-                    setLoading(false)
-                    alert('Le code de vérification à expiré veuillez demander un autre code.')
+                    saveContante("token", JSON.stringify(token))
+                    saveContante("refreshToken", JSON.stringify(refreshToken))
+                    saveContante("user", JSON.stringify(datas[0]))
+                    console.log(JSON.stringify(datas[0]))
+                    navigation.navigate('Tabs')
                 }
                 else
                 {
-                    setLoading(false)
-                    navigation.navigate('Home')
+                    console.log('result', result)
                 }
-            }
-            else
-            {
-                setLoading(false)
-                alert('Le code de vérification est incorrect, veuillez réessayer.')
-            }
+            })
+            .catch((err) => {
+                console.log('error get_user', err)
+            })
+        })
+        .catch((err) => {
+            setLoading(false)
+            console.log('error', err)
+            if (err.response?.status === 401) {
+                alert(`${err.response?.data?.error}`);
+              } else {
+                alert("Une erreur est survenue, vérifie ta connexion");
+              }
+        })
+        // const res:any = await verifyCode({code: code})
+        // console.log('res', res)
+        // if(res && res.length > 0)
+        //     {
+        //         if(res[0].date_expiration < new Date())
+        //         {
+        //             setLoading(false)
+        //             alert('Le code de vérification à expiré veuillez demander un autre code.')
+        //         }
+        //         else
+        //         {
+        //             setLoading(false)
+        //             navigation.navigate('Home')
+        //         }
+        //     }
+        //     else
+        //     {
+        //         setLoading(false)
+        //         alert('Le code de vérification est incorrect, veuillez réessayer.')
+        //     }
     }
 
     const handleResendCode = async () => {
-        setLoading(true)
-        const res:any = await resendCode()
-        console.log('res', res)
-        if(res === true)
-        {
-            setLoading(false)
-            alert('Un code a été envoyé à votre téléphone.')
-        }
-        else
-        {       
-            setLoading(false)
-            alert('Une erreur est survenue, veuillez réessayer.')
-        }
+        // setLoading(true)
+        // const numero = await getConstante("numero")
+        console.log(numero)
+        await resendCode({numero: numero})
+        .then((res) => {
+            // setLoading(false)
+            console.log(res)
+            setMinutes(2)
+            setSeconds(0)
+            setStopTimer(false)
+            alert(`${res.data?.message}`);
+        })
+        .catch((err) => {
+            // setLoading(false)
+            alert(`${err.response?.data?.error}`);
+        })
+        // console.log('res', res)
+        // if(res === true)
+        // {
+        //     setLoading(false)
+        //     alert('Un code a été envoyé à votre téléphone.')
+        // }
+        // else
+        // {       
+        //     setLoading(false)
+        //     alert('Une erreur est survenue, veuillez réessayer.')
+        // }
     }
 
   return (
@@ -126,8 +194,9 @@ const Confirmation = ({navigation}:any) => {
                                 <Text style={{color: 'white', fontSize: 20, textAlign: 'center'}}>Confirmer</Text>
                             </TouchableOpacity>
 
-                            <TouchableOpacity style={{padding: 10, borderRadius: 10, marginTop: 10, width: 200, alignSelf: 'center', flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 15, opacity: stopTimer ? 0.5 : 1}} disabled={!stopTimer} onPress={handleResendCode}>
-                                <Text style={{color: 'black', fontSize: 15, textAlign: 'center', textDecorationLine: 'underline'}}>Code non reçu ?</Text>
+                            <TouchableOpacity style={{padding: 10, borderRadius: 10, marginTop: 10, width: 300, alignSelf: 'center', flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 15, opacity: stopTimer ? 0.5 : 1}} disabled={!stopTimer} onPress={handleResendCode}>
+                                {!stopTimer ? <Text style={{color: '#c4c4c4', fontSize: 15, textAlign: 'center', textDecorationLine: 'underline'}}>Renvoyer le code dans 0{minutes} : {seconds < 10 ? '0' + seconds : seconds} </Text> : <Text style={{color: '#000', fontSize: 15, textAlign: 'center', textDecorationLine: 'underline', fontWeight: 'bold'}}>Renvoyer le code</Text>}
+                                
                             </TouchableOpacity>
                     </View>
                 </View>
@@ -152,4 +221,5 @@ const styles = StyleSheet.create({
     paddingBottom: 40
 },
 });
+
 

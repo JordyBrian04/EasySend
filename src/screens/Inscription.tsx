@@ -5,6 +5,8 @@ import { createUser } from '../services/OnlineDB';
 import { styles } from '../assets/css/inscription'
 import DateTimePicker from '@react-native-community/datetimepicker'
 import { AntDesign } from '@expo/vector-icons';
+import { inscription } from '../services/apiService';
+import { saveContante } from '../services/AsyncStorage';
 
 const Inscription = ({navigation}:any) => {
 
@@ -84,17 +86,43 @@ const Inscription = ({navigation}:any) => {
         // }
 
         SetLoading(true)
-        const res:any = await createUser(userData)
+        try {
+            await inscription({nomcomplet: userData.nomcomplet, 
+                numero: userData.phoneNumber, 
+                date_naiss: userData.date_naissance,
+                code_parrainage: userData.code_promo
+            })
+            .then(async (res)=>{
+                console.log(res)
+                console.log("sauvegarde du numero")
+                await saveContante("numero", JSON.stringify(userData.phoneNumber))
+                console.log("sauvegarde ok")
+                SetLoading(false)
+                navigation.navigate('Confirmation')
+            })
+            .catch((err) => {
+                SetLoading(false)
+                console.log(err)
+                if (err.response?.status === 401) {
+                    alert(`${err.response?.data?.error}`);
+                  } else {
+                    alert("Une erreur est survenue, vérifie ta connexion");
+                  }
+            })
+        } catch (error) {
+            alert("Une erreur est survenue, vérifie ta connexion");
+        }
+        // const res:any = await createUser(userData)
         // console.log(res)
-        if(res?.id)
-        {
-            navigation.navigate('Confirmation')
-        }
-        else
-        {
-            Alert.alert('Erreur',res)
-        }
-        SetLoading(false)
+        // if(res?.id)
+        // {
+        //     navigation.navigate('Confirmation')
+        // }
+        // else
+        // {
+        //     Alert.alert('Erreur',res)
+        // }
+        // SetLoading(false)
     }
     
     return (
