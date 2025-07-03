@@ -52,11 +52,11 @@ export const styles = StyleSheet.create({
         backgroundColor: '#048187',
         borderRadius: 16,
         padding: 12,
-        gap: 10
+        gap: 3
     },
     BtnIcon:{
-        width: 80,
-        height: 80,
+        width: 40,
+        height: 40,
         borderRadius: 40,
         backgroundColor: '#fff',
         alignItems: 'center',
@@ -65,7 +65,7 @@ export const styles = StyleSheet.create({
     },
     BtnText:{
         color: '#FFF',
-        fontSize: 18
+        fontSize: 14
     },
     body:{
         marginTop: -6,

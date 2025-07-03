@@ -27,7 +27,7 @@ const Traitement = ({navigation}:any) => {
 
       await InsertTransaction(        {
         destinataire: datas.destinataire,
-        action: datas.action,
+        pays: datas.pays,
         reseau: datas.reseau,
         expediteur: datas.expediteur,
         reseauDestinataire: datas.reseauDestinataire,

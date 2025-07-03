@@ -28,6 +28,10 @@ import Parrainage from '../screens/Parrainage';
 import Historique from '../screens/Historique';
 import FAQ from '../screens/ServiceClient';
 import ResultatTransaction from '../screens/ResultatTransaction';
+import choixDestination from '../screens/choixDestination';
+import ChoixNumeroInter from '../screens/ChoixNumeroInter';
+import ChoixNumeroDestinataireInter from '../screens/ChoixNumeroDestinataireInter';
+import TransactionInter from '../screens/TransactionInter';
 
 
 // import { getUserDatas, storeNumCompte, storeUserDatas } from '../services/AsyncStorage';
@@ -134,7 +138,7 @@ const AppNavigation = () => {
       const userData = await getConstante("user");
       console.log('userData', userData)
       setUser(userData)
-      const nom = userData.nom_complet || userData.nomcomplet
+      const nom = userData != null ? userData.nom_complet || userData.nomcomplet : ''
       const words = nom.split(' ')
       const initials = words.slice(0, 2).map((word: any) => word.charAt(0))
       const initialsString = initials.join('')
@@ -191,8 +195,8 @@ const AppNavigation = () => {
                         <Text style={{fontSize: 30, color: '#01AEB6', fontWeight: 'bold'}}>{initial}</Text>
                       </View>
                       <View style={{flexDirection: 'column', gap: 10}}>
-                        <Text style={{fontSize: 25, color: 'white'}}>{user.nomcomplet}</Text>
-                        <Text style={{fontSize: 20, color: 'white'}}>{user.numero}</Text>
+                        <Text style={{fontSize: 25, color: 'white'}}>{user && user.nomcomplet || ''}</Text>
+                        <Text style={{fontSize: 20, color: 'white'}}>{user && user.numero || ''}</Text>
                       </View>
                     </View>
                   </View>
@@ -375,7 +379,7 @@ const AppNavigation = () => {
     return (
         <NavigationContainer linking={linking}>
           {/* <Stack.Navigator initialRouteName={initialRoute}> */}
-            <Stack.Navigator initialRouteName={initialRoute}>
+            <Stack.Navigator initialRouteName='Tabs'>
                 <Stack.Screen name="SplashScreen" component={SplashScreen} options={{headerShown: false, gestureEnabled: false}}/>
                 <Stack.Screen name="Connexion" component={Connexion} options={{headerShown: false, gestureEnabled: false}}/>
                 <Stack.Screen name="Inscription" component={Inscription} options={{headerShown: false}}/>
@@ -393,6 +397,10 @@ const AppNavigation = () => {
                 <Stack.Screen name="Profil" component={Profil} options={{headerShown: false}}/>
                 <Stack.Screen name="Parrainage" component={Parrainage} options={{headerShown: false}}/>
                 <Stack.Screen name="ResultatTransaction" component={ResultatTransaction} options={{headerShown: false}}/>
+                <Stack.Screen name="choixDestination" component={choixDestination} options={{headerShown: false}}/>
+                <Stack.Screen name="ChoixNumeroInter" component={ChoixNumeroInter} options={{headerShown: false}}/>
+                <Stack.Screen name="ChoixNumeroDestinataireInter" component={ChoixNumeroDestinataireInter} options={{headerShown: false}}/>
+                <Stack.Screen name="TransactionInter" component={TransactionInter} options={{headerShown: false}}/>
             </Stack.Navigator>
         </NavigationContainer>
     )

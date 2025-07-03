@@ -155,19 +155,19 @@ const Home = ({navigation}:any) => {
 
                 <View style={{marginTop: 20, alignItems: 'center', flexDirection: 'row', gap: 10, marginLeft: 10}}>
                     {/* <Image source={require('../assets/images/hello.png')} style={{width: 40, height: 40, borderRadius: 50}} /> */}
-                    <Text style={{color: 'white', fontWeight: 'bold', fontSize: 24}}> 👋 Hey, {currentUser?.nomcomplet}</Text>
+                    <Text style={{color: 'white', fontWeight: 'bold', fontSize: 24}}> 👋 Hey, {currentUser?.nomcomplet || ''}</Text>
                 </View>
 
                 <View style={styles.BtnGroup}>
 
                     <TouchableOpacity style={styles.Btn} onPress={() => handleValide('Transfert')}>
-                        <FontAwesome name="send-o" size={24} color="white" />
-                        <Text style={styles.BtnText}>Transfert</Text>
+                        <FontAwesome name="send-o" size={20} color="white" />
+                        <Text style={styles.BtnText}>Transfert national</Text>
                     </TouchableOpacity>
 
-                    <TouchableOpacity style={styles.Btn} onPress={() => alert('Bientôt disponible...')}>
-                        <Ionicons name="gift-outline" size={24} color="white" />
-                        <Text style={styles.BtnText}>Cadeaux</Text>
+                    <TouchableOpacity style={styles.Btn} onPress={() => navigation.navigate('choixDestination')}>
+                        <FontAwesome5 name="globe-africa" size={20} color="white" />
+                        <Text style={styles.BtnText}>Transfert international</Text>
                     </TouchableOpacity>
 
                 </View>
