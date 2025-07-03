@@ -123,7 +123,7 @@ const TransactionInter = ({navigation}:any) => {
                     <AntDesign name="arrowleft" size={32} color="black" />
                 </TouchableOpacity>
                 <TouchableOpacity onPress={() => navigation.navigate('Tabs')}>
-                    <AntDesign name="arrowleft" size={32} color="black" />
+                    <AntDesign name="close" size={32} color="black" />
                 </TouchableOpacity>
             </View>
 
